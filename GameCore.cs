@@ -15,22 +15,17 @@ namespace FirstSampleGame;
 
 internal class GameCore : Game
 {
-    private Log Log { get; } = LogManager.GetForCurrentAssembly();
-    private Vector2 _mousePosition;
+    private Log Log { get; } = LogManager.GetForCurrentAssembly();    
 
-    private Entity[] Entities =
+    private readonly List<Entity> Entities =
     [
         new Player(new(300), new(200)),
     ];
 
+    private Entity Player => Entities[0];
+
     internal GameCore()
     {        
-    }
-
-    protected override void MouseMoved(MouseMoveEventArgs e)
-    {
-        //_mousePosition = e.Position;
-        base.MouseMoved(e);
     }
 
     protected override void LoadContent()
@@ -44,13 +39,12 @@ internal class GameCore : Game
     protected override void Draw(RenderContext context)
     {                
         var mousePosition = Mouse.GetPosition();
-        var playerPosition = Entities[0].Position;       
-        var delta = playerPosition - mousePosition;
+        var delta = Player.VisualCenter - mousePosition;
         var radians = Math.Atan2(delta.Y, delta.X);
         var degrees = radians * (180 / Math.PI);
 
         context.DrawString($"Mouse position: {mousePosition}, {degrees:00} deg", new(20), Color.White);
-        context.Line(playerPosition, mousePosition, Color.White);
+        context.Line(Player.VisualCenter, mousePosition, Color.White);
 
         foreach (var e in Entities) context.DrawTexture(e.Texture, e.Position, new(1));
     }
