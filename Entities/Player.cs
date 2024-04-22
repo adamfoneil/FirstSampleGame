@@ -4,29 +4,30 @@ using System.Numerics;
 
 namespace FirstSampleGame.Entities;
 
-internal class Player(Vector2 position, Vector2 speed) : Entity(position, speed)
+public class Player : GameEntity
 {
-    protected override string TextureName => "player.png";
+    public float Speed;
+    public Vector2 shotVector;
+    public float fireRate;
+    public float shotTimer;
+    public float shotSpeed;
 
-    protected override void OnUpdate(float verticalDelta, float horizontalDelta)
+    public Player(string textureName = "player.png")
     {
-        if (Keyboard.IsKeyDown(KeyCode.Up))
-        {
-            Position.Y -= verticalDelta;
-        }            
-        else if (Keyboard.IsKeyDown(KeyCode.Down))
-        {
-            Position.Y += verticalDelta;
-        }
-            
-        if (Keyboard.IsKeyDown(KeyCode.Left))
-        {
-            Position.X -= horizontalDelta;
-        }
-        else if (Keyboard.IsKeyDown(KeyCode.Right))
-        {
-            Position.X += horizontalDelta;
-        }
+        TextureName = textureName;
+        Speed = 300;
+        shotSpeed = 1500f;
+        fireRate = .1f;
+        shotVector = Vector2.Zero;
+        Scale = new(1f);
     }
+
+    public void Update(float delta, Vector2 direction)
+    {
+        Vector2 velocity = direction * Speed * delta;
+        Position += velocity;
+        shotTimer -= delta;
+    }
+
 
 }

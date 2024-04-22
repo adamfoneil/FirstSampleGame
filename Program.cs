@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace FirstSampleGame
 {
     internal class Program
