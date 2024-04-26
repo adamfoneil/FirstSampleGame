@@ -8,4 +8,11 @@
     <PackageReference Include="Chroma" Version="0.62.2" />
   </ItemGroup>
 
+<ItemGroup>
+  <Content Include="Resources\*.*">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Link>Resources\%(Filename)%(Extension)</Link>
+  </Content>
+</ItemGroup>
+
 </Project>

@@ -49,6 +49,9 @@ internal class GameCore : Game
     private Player Player;
     private Reticle Reticle;
 
+    // level map
+    private GameEntity LevelMap;
+
     // texture variables
     private Texture BulletTexture;
     private Texture EnemyTexture;
@@ -119,7 +122,8 @@ internal class GameCore : Game
     protected override IContentProvider InitializeContentPipeline()
     {
         return new FileSystemContentProvider(
-            Path.Combine(AppContext.BaseDirectory, "../../../Resources")
+            //Path.Combine(AppContext.BaseDirectory, "../../../Resources")
+            Path.Combine(AppContext.BaseDirectory, "Resources")
         );
     }
 
@@ -133,17 +137,23 @@ internal class GameCore : Game
         EnemyTexture = Content.Load<Texture>("pentagram.png");
         ReticleTexture = Content.Load<Texture>("reticle.png");
 
-        // create player, reticle  
+        // create player, reticle, level map
         Player = new Player();
         Reticle = new Reticle();
+        LevelMap = new GameEntity();
+        LevelMap.TextureName = "test-level.png";
 
 
-        // load textures for player and reticle
+        // load textures for player, reticle, and LevelMap
         Player.LoadTexture(Content);
         Reticle.LoadTexture(Content);
+        LevelMap.LoadTexture(Content);
+
+
+
 
         // set player's initial position in center
-        Player.Position = new Vector2(960f, 540f);
+        Player.Position = new Vector2(760f, 540f);
         
 
         // particle system 
@@ -185,6 +195,8 @@ internal class GameCore : Game
 
     protected override void Draw(RenderContext context)
     {                
+
+        context.DrawTexture(LevelMap.Texture, LevelMap.Position, LevelMap.Scale);
         // render blank background for particle emitter to texture
         context.RenderTo(particleSystemRenderTarget, (ctx, tgt) =>
         {
@@ -260,9 +272,27 @@ internal class GameCore : Game
         }
 
 
+        // handle leftStick and keyboard for getting direction of player
+        Vector2 playerDirection = processKeyboardInput();
+        if (playerDirection.X == 0 && playerDirection.Y == 0)
+        {
+            playerDirection = processAnalogStick(0);
+        }
+
+        Vector2 lastPosition = Player.Position;
+
+        // update player's position based on direction
+        Player.Update(delta, playerDirection);
+
+        // check player collision with level map
+        if (Player.hitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
+
         // execute collision checks
         checkBulletCollision();
         checkPlayerCollision();
+
+        
+
 
         // remove bullets that have left the screen
         var bulletsToKill = new List<GameEntity>();
@@ -276,15 +306,6 @@ internal class GameCore : Game
         removeBullets(bulletsToKill);
 
 
-        // handle leftStick and keyboard for getting direction of player
-        Vector2 playerDirection = processKeyboardInput();
-        if (playerDirection.X == 0 && playerDirection.Y == 0)
-        {
-            playerDirection = processAnalogStick(0);
-        }
-
-        // update player's position based on direction
-        Player.Update(delta, playerDirection);
         
         // update particle emitter
         particleEmitter.Update(delta);
