@@ -57,6 +57,15 @@ public class GameEntity
 
     }
 
+    public bool hitTestWithTexture(Texture texture)
+    {
+        Color pixelColor = texture.GetPixel((int)Position.X, (int)Position.Y);
+        if (pixelColor.A != 0) return true;
+
+        return false;
+
+    }
+
     public void setTexture(Texture texture)
     {
         Texture = texture;
