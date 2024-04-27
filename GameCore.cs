@@ -212,20 +212,20 @@ internal class GameCore : Game
 
 
         // draw player , reticle and health meter
-        context.DrawTexture(Player.Texture, Player.drawPosition(), Player.Scale);
-        context.DrawTexture(Reticle.Texture, Reticle.drawPosition(), Reticle.Scale);
+        context.DrawTexture(Player.Texture, Player.DrawPosition(), Player.Scale);
+        context.DrawTexture(Reticle.Texture, Reticle.DrawPosition(), Reticle.Scale);
         Player.meter.drawHealthMeter(context);
 
         // draw bullets
         foreach (var bullet in bullets)
         {
-            if (bullet.Visible) context.DrawTexture(bullet.Texture, bullet.drawPosition(), bullet.Scale);
+            if (bullet.Visible) context.DrawTexture(bullet.Texture, bullet.DrawPosition(), bullet.Scale);
         }
 
         // draw enemies
         foreach (var enemy in enemies)
         {
-            if (enemy.Visible) context.DrawTexture(enemy.Texture, enemy.drawPosition(), enemy.Scale);
+            if (enemy.Visible) context.DrawTexture(enemy.Texture, enemy.DrawPosition(), enemy.Scale);
             enemy.meter.drawHealthMeter(context);
 
             // only draw paths and reticle ray if showDebug is true
@@ -273,10 +273,10 @@ internal class GameCore : Game
 
 
         // handle leftStick and keyboard for getting direction of player
-        Vector2 playerDirection = processKeyboardInput();
+        Vector2 playerDirection = ProcessKeyboardInput();
         if (playerDirection.X == 0 && playerDirection.Y == 0)
         {
-            playerDirection = processAnalogStick(0);
+            playerDirection = ProcessAnalogStick(0);
         }
 
         Vector2 lastPosition = Player.Position;
@@ -285,7 +285,7 @@ internal class GameCore : Game
         Player.Update(delta, playerDirection);
 
         // check player collision with level map
-        if (Player.hitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
+        if (Player.HitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
 
         // execute collision checks
         CheckBulletCollision();
@@ -307,7 +307,7 @@ internal class GameCore : Game
 
 
         // handle leftStick and keyboard for getting direction of player
-        Vector2 playerDirection = ProcessKeyboardInput();
+        //Vector2 playerDirection = ProcessKeyboardInput();
         if (playerDirection.X == 0 && playerDirection.Y == 0)
         {
             playerDirection = ProcessAnalogStick(0);
@@ -518,7 +518,7 @@ internal class GameCore : Game
         for (int enemyIndex = 0; enemyIndex < enemies.Count; enemyIndex++)
         {
             var enemy = enemies[enemyIndex];
-            if (Player.hitTestWith(enemy))
+            if (Player.HitTestWith(enemy))
             {
                 Player.Damage += 1;
                 if (Player.Damage > Player.HitPoints) Player.Damage = 0; // reset health because he doesn't die yet
@@ -539,7 +539,7 @@ internal class GameCore : Game
         {
             foreach (GameEntity enemy in enemies)
             {
-                if (enemy.hitTestWith(bullet) && enemy.Active) 
+                if (enemy.HitTestWith(bullet) && enemy.Active) 
                 {
                     enemy.Damage += ((Bullet)bullet).BulletDamage;
                     if (enemy.Damage >= enemy.HitPoints)
@@ -551,10 +551,10 @@ internal class GameCore : Game
                         metersToKill.Add(enemy.meter);
 
                     }
-                        else 
-                        {
-                            sfxHit.Play();
-                        }
+                    else 
+                    {
+                        sfxHit.Play();
+                    }
                     bulletsToKill.Add(bullet);
                     break;
                 }

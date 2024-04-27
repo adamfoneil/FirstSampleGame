@@ -40,13 +40,13 @@ public class GameEntity
     
     }
 
-    public Vector2 drawPosition()
+    public Vector2 DrawPosition()
     {
         Vector2 drawAt = new Vector2(Position.X - (Texture.Width * Scale.X) * .5f, Position.Y - (Texture.Height * Scale.Y) *.5f);
         return drawAt;
     }
 
-    public bool hitTestWith(GameEntity entity)
+    public bool HitTestWith(GameEntity entity)
     {
         
         float distance = Vector2.Distance(Position, entity.Position);
@@ -57,7 +57,7 @@ public class GameEntity
 
     }
 
-    public bool hitTestWithTexture(Texture texture)
+    public bool HitTestWithTexture(Texture texture)
     {
         Color pixelColor = texture.GetPixel((int)Position.X, (int)Position.Y);
         if (pixelColor.A != 0) return true;
@@ -66,7 +66,7 @@ public class GameEntity
 
     }
 
-    public void setTexture(Texture texture)
+    public void SetTexture(Texture texture)
     {
         Texture = texture;
         TextureCenter = Texture.AbsoluteCenter;
