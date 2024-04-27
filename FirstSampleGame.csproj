@@ -8,4 +8,9 @@
     <PackageReference Include="Chroma" Version="0.62.2" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <None Include="C:\Users\adamo\source\FirstGame\FirstSampleGame\.editorconfig" />
+  </ItemGroup>
+
 </Project>
