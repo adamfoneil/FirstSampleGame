@@ -45,6 +45,7 @@ internal class GameCore : Game
     private List<GameEntity> bullets = new List<GameEntity>();
     private List<GameEntity> healthMeters = new List<GameEntity>();
 
+
     // player and reticle instances
     private Player Player;
     private Reticle Reticle;
@@ -57,11 +58,15 @@ internal class GameCore : Game
     private Texture EnemyTexture;
     private Texture ReticleTexture;
 
+    // level texture names
+    private List<string> LeveTexturelNames = new List<string>();
+
+
     // spawner variables
     private float spawnTimer;
     private float spawnDelay;
-    private bool showDebug = false;
-    private bool spawnerActive = true;
+    private bool showDebug;
+    private bool spawnerActive;
 
     // keypress delay for debug menu
     private float keypressTimer;
@@ -70,6 +75,11 @@ internal class GameCore : Game
     // toggles for joystick and mouse control
     private bool activeJoystick;
     private bool mouseReticle;
+
+    // toggle Path logging
+    private bool pathLogging = false;
+
+    private List<Vector2> pathLoggingPath;
     
     // analog sticks
     private Vector2 leftStick;
@@ -92,6 +102,9 @@ internal class GameCore : Game
 
     public Pooler pooler = new Pooler();
     private Random random = new Random();
+    private LevelManager levelManager;
+    private int CurrentLevel;
+    
 
     internal GameCore() : base(new(false, false))
     {     
@@ -107,6 +120,12 @@ internal class GameCore : Game
         // init contol variables
         activeJoystick = false;
         mouseReticle = false;
+        showDebug = false;
+        spawnerActive = false;
+
+        // init LevelManager
+        levelManager = new LevelManager();
+        levelManager.createLevels();
 
         // create views for controller system
         _views = new List<GenericControllerView>
@@ -126,6 +145,8 @@ internal class GameCore : Game
             Path.Combine(AppContext.BaseDirectory, "Resources")
         );
     }
+
+
 
 
 
@@ -190,7 +211,22 @@ internal class GameCore : Game
         spawnDelay = 2f;
         spawnTimer = spawnDelay;
 
+        InitLevel(1);
+
     }
+
+    public void InitLevel(int level)
+    {
+        LevelRecord currentLevel = levelManager.GetCurrentLevel();
+        foreach (var spawnRecord in currentLevel.SpawnRecords)
+        {
+            spawnEnemyWithRecord(spawnRecord);
+
+        }
+        
+    }
+
+
 
 
     protected override void Draw(RenderContext context)
@@ -208,7 +244,7 @@ internal class GameCore : Game
         context.DrawTexture(particleSystemRenderTarget, Vector2.Zero, Vector2.One, Vector2.Zero, 0);
 
         // draw debug menu text
-        context.DrawString($" FPS {PerformanceCounter.FPS}\n <1> showDebug: {showDebug} \n <2> Player.Speed: {Player.Speed} \n <3> shotSpeed: {Player.shotSpeed} \n <4> fireRate:{Player.fireRate:0.##} \n <5> spawnerActive: {spawnerActive} \n <6> mouseReticle: {mouseReticle} \n Bullets: {bullets.Count} \n Enemies: {enemies.Count} \n mousePosition: {Reticle.Position} \n leftStick: {leftStick} \n rightStick: {rightStick}", new(20), Chroma.Graphics.Color.White);
+        context.DrawString($" FPS {PerformanceCounter.FPS}\n <1> showDebug: {showDebug} \n <2> Player.Speed: {Player.Speed} \n <3> shotSpeed: {Player.shotSpeed} \n <4> fireRate:{Player.fireRate:0.##} \n <5> spawnerActive: {spawnerActive} \n <6> mouseReticle: {mouseReticle} \n <7> pathLogging: {pathLogging} \n Bullets: {bullets.Count} \n Enemies: {enemies.Count} \n mousePosition: {Reticle.Position} \n leftStick: {leftStick} \n rightStick: {rightStick}", new(20), Chroma.Graphics.Color.White);
 
 
         // draw player , reticle and health meter
@@ -231,10 +267,21 @@ internal class GameCore : Game
             // only draw paths and reticle ray if showDebug is true
             if (showDebug)
             {
-                PathNav.DrawPath(enemy, context);
+                PathNav.DrawPath(enemy.pathNav.path, context);
                 context.Line(Player.Position, Reticle.Position, Color.White);
+                if (pathLogging)
+                {
+                    Console.WriteLine("draw it");
+                    PathNav.DrawPath(pathLoggingPath, context);
+                }
             } 
         }
+
+            // only draw paths and reticle ray if showDebug is true
+            if (showDebug && pathLogging)
+            {
+                PathNav.DrawPath(pathLoggingPath, context);
+            } 
     }
 
     protected override void Update(float delta)
@@ -353,12 +400,33 @@ internal class GameCore : Game
                 mouseReticle = !mouseReticle;
                 keypressTimer = keypressDelay;
             }
+
+            if (Keyboard.IsKeyDown(KeyCode.Alpha7))
+            {
+                pathLogging = !pathLogging;
+                if (pathLogging) 
+                {
+                    pathLoggingPath = new List<Vector2>();
+                    showDebug = true;
+                    mouseReticle = true;
+                }
+                keypressTimer = keypressDelay;
+            }
         }
 
         // handle mouse input for firing a bullet
         if (Mouse.IsButtonDown(MouseButton.Left))
         {
-            fireBullet();
+            if (pathLogging && keypressTimer < 0)
+            {
+                Console.WriteLine($"new Vector2({Mouse.GetPosition().X}, {Mouse.GetPosition().Y}),");
+                keypressTimer = keypressDelay;
+                pathLoggingPath.Add(Mouse.GetPosition());
+            }
+                else
+                {
+                    if (!pathLogging) fireBullet(); 
+                }
         }
 
         // check if enemy should be spawned
@@ -420,7 +488,7 @@ internal class GameCore : Game
     {
 
         spawnTimer -= delta;
-        if (spawnerActive && spawnTimer < 0) 
+        if (spawnerActive && spawnTimer < 0 && enemies.Count < 2) 
         {
             // get a random spawn location at a random angle on a radius; 
             float radius = 300f;
@@ -430,7 +498,7 @@ internal class GameCore : Game
             Vector2 spawnPosition =  originPosition +  offsetPosition;
 
             // get a randomPath
-            int pathIndex = RandomRange(random, 0, 1);
+            int pathIndex = RandomRange(random, 2, 3);
             List<Vector2> randomPath = PathNav.getShapePath(pathIndex);
 
             // generate random scale, speed, scale of enemies
@@ -438,8 +506,16 @@ internal class GameCore : Game
             float randomSpeed = RandomRange(random, 30f, 150f);
             float randomEnemyScale = RandomRange(random, 1f, 2f);
 
+            bool offsetPath = false;
+            if (pathIndex == 2 || pathIndex == 3) 
+            {
+                randomPathScale = 1;
+                offsetPath = false;
+                spawnPosition = Vector2.Zero;
+            }
+
             // spawn the enemy with the random data
-            spawnEnemy(spawnPosition, randomSpeed, randomEnemyScale,  randomPath, randomPathScale);
+            spawnEnemy(spawnPosition, randomSpeed, randomEnemyScale,  randomPath, randomPathScale, true, offsetPath);
 
             // reset the timer for next spawn
             spawnTimer = spawnDelay;
@@ -468,8 +544,13 @@ internal class GameCore : Game
     }
 
 
+    void spawnEnemyWithRecord(SpawnRecord spawnRecord)
+    {
+        spawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
+    }
+
     // spawns and enemy and health meter
-    void spawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f)
+    void spawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f, bool setActive = true, bool offsetPath = true)
     {
         Enemy enemy = (Enemy) pooler.getEntityFromPool(Pooler.PoolType.ENEMY);
         enemy.Position = position;
@@ -479,7 +560,7 @@ internal class GameCore : Game
         enemy.Scale = new(enemyScale);
         enemies.Add((GameEntity)enemy);
 
-        if (path != default) enemy.pathNav.SetPath(enemy, position, path, pathScale);
+        if (path != default) enemy.pathNav.SetPath(enemy, position, path, pathScale, setActive, offsetPath);
 
         HealthMeter meter = (HealthMeter) pooler.getEntityFromPool(Pooler.PoolType.HEALTH_METER);
         meter.Position = position;

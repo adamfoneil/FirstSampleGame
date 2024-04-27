@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using FirstSampleGame.Abstract;
 using Chroma.Graphics;
+using System;
 
 public class PathNav
 {
@@ -21,7 +22,7 @@ public class PathNav
 
 
     // set path for entity
-    public void SetPath(GameEntity entity, Vector2 origin, List<Vector2> newPath, float scale = 1f,  bool setActive = true)
+    public void SetPath(GameEntity entity, Vector2 origin, List<Vector2> newPath, float scale = 1f,  bool setActive = true, bool offsetPath = true)
     {
         if (scale != 1f)
         {
@@ -33,13 +34,15 @@ public class PathNav
             }
 
         // offset path data based on entity's origin
-        path = PathNav.OffSetPath(path, origin);
+        if (offsetPath) path = PathNav.OffSetPath(path, origin);
+
         IsActive = setActive;
         
         pathIndex = 0;
 
         // set entity's position to first path position
         entity.Position = path[pathIndex];
+        Console.WriteLine(entity.Position);
 
         // get next waypoint (where the entity will travel to)
         nextWayPoint();
@@ -99,9 +102,8 @@ public class PathNav
     }
 
     // draw the path
-    public static void DrawPath(GameEntity entity, RenderContext context)
+    public static void DrawPath(List<Vector2> navPath, RenderContext context)
     {
-        List<Vector2> navPath = entity.pathNav.path;
         if (navPath.Count > 0)
         {
             for (int index = 0;index < navPath.Count;index++)
@@ -163,8 +165,51 @@ public class PathNav
                     new Vector2(1, 1),
                     new Vector2(-1, 1),
                     new Vector2(0, 0)
-                    
                 };
+                break;
+
+            case 2 :
+                path = new List<Vector2>
+                {
+                    new Vector2(869, 91),
+                    new Vector2(399, 184),
+                    new Vector2(575, 587),
+                    new Vector2(551, 636),
+                    new Vector2(120, 518),
+                    new Vector2(116, 563),
+                    new Vector2(542, 689),
+                    new Vector2(592, 717),
+                    new Vector2(730, 1031),
+                    new Vector2(919, 1005),
+                    new Vector2(823, 782),
+                    new Vector2(890, 780),
+                    new Vector2(1334, 912),
+                    new Vector2(1378, 833),
+                    new Vector2(1385, 534),
+                    new Vector2(1838, 526),
+                    new Vector2(1831, 284),
+                    new Vector2(1280, 290),
+                    new Vector2(644, 316),
+                    new Vector2(596, 177),
+                    new Vector2(901, 117),
+                    new Vector2(869, 93) 
+                };
+
+                //path = PathNav.OffSetPath(path, new Vector2(0,0));
+                break;
+
+            case 3 :
+                path = new List<Vector2>
+                {
+                    new Vector2(553, 153),
+                    new Vector2(392, 182),
+                    new Vector2(515, 475),
+                    new Vector2(601, 699),
+                    new Vector2(742, 1044),
+                    new Vector2(931, 1038),
+                    new Vector2(552, 152)
+                };
+                //path = PathNav.OffSetPath(path, new Vector2(0,0));
                 break;
 
             default :
