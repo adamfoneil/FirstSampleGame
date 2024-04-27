@@ -248,20 +248,20 @@ internal class GameCore : Game
 
 
         // draw player , reticle and health meter
-        context.DrawTexture(Player.Texture, Player.drawPosition(), Player.Scale);
-        context.DrawTexture(Reticle.Texture, Reticle.drawPosition(), Reticle.Scale);
+        context.DrawTexture(Player.Texture, Player.DrawPosition(), Player.Scale);
+        context.DrawTexture(Reticle.Texture, Reticle.DrawPosition(), Reticle.Scale);
         Player.meter.drawHealthMeter(context);
 
         // draw bullets
         foreach (var bullet in bullets)
         {
-            if (bullet.Visible) context.DrawTexture(bullet.Texture, bullet.drawPosition(), bullet.Scale);
+            if (bullet.Visible) context.DrawTexture(bullet.Texture, bullet.DrawPosition(), bullet.Scale);
         }
 
         // draw enemies
         foreach (var enemy in enemies)
         {
-            if (enemy.Visible) context.DrawTexture(enemy.Texture, enemy.drawPosition(), enemy.Scale);
+            if (enemy.Visible) context.DrawTexture(enemy.Texture, enemy.DrawPosition(), enemy.Scale);
             enemy.meter.drawHealthMeter(context);
 
             // only draw paths and reticle ray if showDebug is true
@@ -297,7 +297,7 @@ internal class GameCore : Game
         {
             Reticle.Position = Player.Position + rightStick * 50f;
             float reticleDistance = Vector2.Distance(Reticle.Position, Player.Position);
-            if (50f - reticleDistance <  5f) fireBullet();
+            if (50f - reticleDistance <  5f) FireBullet();
         }
             else
             {
@@ -320,10 +320,10 @@ internal class GameCore : Game
 
 
         // handle leftStick and keyboard for getting direction of player
-        Vector2 playerDirection = processKeyboardInput();
+        Vector2 playerDirection = ProcessKeyboardInput();
         if (playerDirection.X == 0 && playerDirection.Y == 0)
         {
-            playerDirection = processAnalogStick(0);
+            playerDirection = ProcessAnalogStick(0);
         }
 
         Vector2 lastPosition = Player.Position;
@@ -332,11 +332,11 @@ internal class GameCore : Game
         Player.Update(delta, playerDirection);
 
         // check player collision with level map
-        if (Player.hitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
+        if (Player.HitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
 
         // execute collision checks
-        checkBulletCollision();
-        checkPlayerCollision();
+        CheckBulletCollision();
+        CheckPlayerCollision();
 
         
 
@@ -350,9 +350,18 @@ internal class GameCore : Game
                 bulletsToKill.Add(bullet);
             }
         }
-        removeBullets(bulletsToKill);
+        RemoveBullets(bulletsToKill);
 
 
+        // handle leftStick and keyboard for getting direction of player
+        //Vector2 playerDirection = ProcessKeyboardInput();
+        if (playerDirection.X == 0 && playerDirection.Y == 0)
+        {
+            playerDirection = ProcessAnalogStick(0);
+        }
+
+        // update player's position based on direction
+        Player.Update(delta, playerDirection);
         
         // update particle emitter
         particleEmitter.Update(delta);
@@ -417,6 +426,7 @@ internal class GameCore : Game
         // handle mouse input for firing a bullet
         if (Mouse.IsButtonDown(MouseButton.Left))
         {
+
             if (pathLogging && keypressTimer < 0)
             {
                 Console.WriteLine($"new Vector2({Mouse.GetPosition().X}, {Mouse.GetPosition().Y}),");
@@ -427,17 +437,19 @@ internal class GameCore : Game
                 {
                     if (!pathLogging) fireBullet(); 
                 }
+
+            FireBullet();
         }
 
         // check if enemy should be spawned
-        spawnCheck(delta);
+        SpawnCheck(delta);
 
 
         base.Update(delta);
     }
 
     // returns a 
-    Vector2 processAnalogStick(int index)
+    Vector2 ProcessAnalogStick(int index)
     {
         Vector2 stick = leftStick;
         if (index == 0)
@@ -461,7 +473,7 @@ internal class GameCore : Game
 
     // returns a direction based on keyboard movement
     // 8 possible directions
-    Vector2 processKeyboardInput()
+    Vector2 ProcessKeyboardInput()
     {
         Vector2 direction = Vector2.Zero;
         if (Keyboard.IsKeyDown(KeyCode.Up) || Keyboard.IsKeyDown(KeyCode.W))
@@ -484,7 +496,7 @@ internal class GameCore : Game
         return direction;
     }
 
-    void spawnCheck(float delta)
+    void SpawnCheck(float delta)
     {
 
         spawnTimer -= delta;
@@ -515,7 +527,7 @@ internal class GameCore : Game
             }
 
             // spawn the enemy with the random data
-            spawnEnemy(spawnPosition, randomSpeed, randomEnemyScale,  randomPath, randomPathScale, true, offsetPath);
+            SpawnEnemy(spawnPosition, randomSpeed, randomEnemyScale,  randomPath, randomPathScale, true, offsetPath);
 
             // reset the timer for next spawn
             spawnTimer = spawnDelay;
@@ -528,7 +540,7 @@ internal class GameCore : Game
 
     
     // fires a bullet in direction of the reticle
-    void fireBullet()
+    void FireBullet()
     {
         if (Player.shotTimer > 0) return;
         Player.shotTimer = Player.fireRate;
@@ -550,7 +562,7 @@ internal class GameCore : Game
     }
 
     // spawns and enemy and health meter
-    void spawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f, bool setActive = true, bool offsetPath = true)
+    void SpawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f, bool setActive = true, bool offsetPath = true)
     {
         Enemy enemy = (Enemy) pooler.getEntityFromPool(Pooler.PoolType.ENEMY);
         enemy.Position = position;
@@ -585,12 +597,12 @@ internal class GameCore : Game
 
 
     // checks for player collision with enemies and applies damage, plays sound effect
-    void checkPlayerCollision()
+    void CheckPlayerCollision()
     {
         for (int enemyIndex = 0; enemyIndex < enemies.Count; enemyIndex++)
         {
             var enemy = enemies[enemyIndex];
-            if (Player.hitTestWith(enemy))
+            if (Player.HitTestWith(enemy))
             {
                 Player.Damage += 1;
                 if (Player.Damage > Player.HitPoints) Player.Damage = 0; // reset health because he doesn't die yet
@@ -601,7 +613,7 @@ internal class GameCore : Game
 
 
     // checks for collision betweeen entities in bullets and enemies lists
-    void checkBulletCollision()
+    void CheckBulletCollision()
     {
         var enemiesToKill = new List<GameEntity>();
         var bulletsToKill = new List<GameEntity>();
@@ -611,7 +623,7 @@ internal class GameCore : Game
         {
             foreach (GameEntity enemy in enemies)
             {
-                if (enemy.hitTestWith(bullet) && enemy.Active) 
+                if (enemy.HitTestWith(bullet) && enemy.Active) 
                 {
                     enemy.Damage += ((Bullet)bullet).BulletDamage;
                     if (enemy.Damage >= enemy.HitPoints)
@@ -623,10 +635,10 @@ internal class GameCore : Game
                         metersToKill.Add(enemy.meter);
 
                     }
-                        else 
-                        {
-                            sfxHit.Play();
-                        }
+                    else 
+                    {
+                        sfxHit.Play();
+                    }
                     bulletsToKill.Add(bullet);
                     break;
                 }
@@ -634,16 +646,16 @@ internal class GameCore : Game
         } 
 
         // remove entities that need to be recycled
-        removeEnemies(enemiesToKill);
-        removeBullets(bulletsToKill);
-        removeMeters(metersToKill);
+        RemoveEnemies(enemiesToKill);
+        RemoveBullets(bulletsToKill);
+        RemoveMeters(metersToKill);
 
     }
 
 
     // batch removal of various entities
 
-    private void removeBullets(List<GameEntity> bulletsToKill)
+    private void RemoveBullets(List<GameEntity> bulletsToKill)
     {
         while (bulletsToKill.Count > 0)
         {
@@ -653,7 +665,7 @@ internal class GameCore : Game
         }
     }
 
-    private void removeEnemies(List<GameEntity> enemiesToKill)
+    private void RemoveEnemies(List<GameEntity> enemiesToKill)
     {
         while (enemiesToKill.Count > 0)
         {
@@ -663,7 +675,7 @@ internal class GameCore : Game
         }
     }
 
-    private void removeMeters(List<GameEntity> metersToKill)
+    private void RemoveMeters(List<GameEntity> metersToKill)
     {
         while (metersToKill.Count > 0)
         {
@@ -720,7 +732,7 @@ internal class GameCore : Game
     {
 
         Console.WriteLine($"Button Pressed {e.Button} ");
-        if (e.Button == ControllerButton.A) fireBullet();
+        if (e.Button == ControllerButton.A) FireBullet();
         
         for (var i = 0; i < _views.Count; i++)
         {
