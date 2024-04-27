@@ -25,11 +25,13 @@ public class LevelManager
     }
 
 
-    public void createLevels()
+    public void CreateLevels()
     {
-        List<SpawnRecord> spawnRecords = new List<SpawnRecord>();
-        spawnRecords.Add(new SpawnRecord(0, 150f , 1f, 100, PathNav.getShapePath(2), new Vector2(700f, 540f)));
-        spawnRecords.Add(new SpawnRecord(1, 150f , 1f, 100, PathNav.getShapePath(3), new Vector2(700f, 540f)));
+        List<SpawnRecord> spawnRecords =
+		[
+			new SpawnRecord(0, 150f , 1f, 100, PathNav.GetShapePath(2), new Vector2(700f, 540f)),
+			new SpawnRecord(1, 150f , 1f, 100, PathNav.GetShapePath(3), new Vector2(700f, 540f)),
+		];
         CreateLevel("test-level.png", new Vector2(200,300), spawnRecords);
     }
 

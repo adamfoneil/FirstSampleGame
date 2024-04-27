@@ -125,7 +125,7 @@ internal class GameCore : Game
 
         // init LevelManager
         levelManager = new LevelManager();
-        levelManager.createLevels();
+        levelManager.CreateLevels();
 
         // create views for controller system
         _views = new List<GenericControllerView>
@@ -197,13 +197,13 @@ internal class GameCore : Game
         sfxExplosion = Content.Load<Sound>("doomsg.wav");
 
         // create GameEntity pools
-        pooler.createBulletPool(50, BulletTexture);
-        pooler.createEnemyPool(50, EnemyTexture);
-        pooler.createHealthMetersPool(50, EnemyTexture);
+        pooler.CreateBulletPool(50, BulletTexture);
+        pooler.CreateEnemyPool(50, EnemyTexture);
+        pooler.CreateHealthMetersPool(50, EnemyTexture);
 
         
         // create meter for player
-        HealthMeter meter = (HealthMeter) pooler.getEntityFromPool(Pooler.PoolType.HEALTH_METER);
+        HealthMeter meter = (HealthMeter) pooler.GetEntityFromPool(Pooler.PoolType.HEALTH_METER);
         Player.meter = meter;
         meter.parent = Player;
     
@@ -220,14 +220,9 @@ internal class GameCore : Game
         LevelRecord currentLevel = levelManager.GetCurrentLevel();
         foreach (var spawnRecord in currentLevel.SpawnRecords)
         {
-            spawnEnemyWithRecord(spawnRecord);
-
-        }
-        
+            SpawnEnemyWithRecord(spawnRecord);
+        }        
     }
-
-
-
 
     protected override void Draw(RenderContext context)
     {                
@@ -435,7 +430,7 @@ internal class GameCore : Game
             }
                 else
                 {
-                    if (!pathLogging) fireBullet(); 
+                    if (!pathLogging) FireBullet(); 
                 }
 
             FireBullet();
@@ -511,7 +506,7 @@ internal class GameCore : Game
 
             // get a randomPath
             int pathIndex = RandomRange(random, 2, 3);
-            List<Vector2> randomPath = PathNav.getShapePath(pathIndex);
+            List<Vector2> randomPath = PathNav.GetShapePath(pathIndex);
 
             // generate random scale, speed, scale of enemies
             float randomPathScale = RandomRange(random, 50f, 400f);
@@ -545,7 +540,7 @@ internal class GameCore : Game
         if (Player.shotTimer > 0) return;
         Player.shotTimer = Player.fireRate;
         sfxShot.Play();
-        Bullet bullet = (Bullet)pooler.getEntityFromPool(Pooler.PoolType.BULLET);
+        Bullet bullet = (Bullet)pooler.GetEntityFromPool(Pooler.PoolType.BULLET);
         bullets.Add(bullet);
         bullet.Speed = Player.shotSpeed;
         bullet.Visible = true;
@@ -556,15 +551,15 @@ internal class GameCore : Game
     }
 
 
-    void spawnEnemyWithRecord(SpawnRecord spawnRecord)
+    void SpawnEnemyWithRecord(SpawnRecord spawnRecord)
     {
-        spawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
+        SpawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
     }
 
     // spawns and enemy and health meter
     void SpawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f, bool setActive = true, bool offsetPath = true)
     {
-        Enemy enemy = (Enemy) pooler.getEntityFromPool(Pooler.PoolType.ENEMY);
+        Enemy enemy = (Enemy) pooler.GetEntityFromPool(Pooler.PoolType.ENEMY);
         enemy.Position = position;
         enemy.Active = true;
         enemy.Visible = true;
@@ -574,7 +569,7 @@ internal class GameCore : Game
 
         if (path != default) enemy.pathNav.SetPath(enemy, position, path, pathScale, setActive, offsetPath);
 
-        HealthMeter meter = (HealthMeter) pooler.getEntityFromPool(Pooler.PoolType.HEALTH_METER);
+        HealthMeter meter = (HealthMeter) pooler.GetEntityFromPool(Pooler.PoolType.HEALTH_METER);
         meter.Position = position;
         meter.Active = true;
         meter.Visible = true;
@@ -661,7 +656,7 @@ internal class GameCore : Game
         {
             var bullet = bulletsToKill[0];
             bulletsToKill.RemoveAt(0);
-            pooler.returnEntityToPool(Pooler.PoolType.BULLET, bullet, bullets);
+            pooler.ReturnEntityToPool(Pooler.PoolType.BULLET, bullet, bullets);
         }
     }
 
@@ -671,7 +666,7 @@ internal class GameCore : Game
         {
             var enemy = enemiesToKill[0];
             enemiesToKill.RemoveAt(0);
-            pooler.returnEntityToPool(Pooler.PoolType.ENEMY, enemy, enemies);
+            pooler.ReturnEntityToPool(Pooler.PoolType.ENEMY, enemy, enemies);
         }
     }
 
@@ -684,7 +679,7 @@ internal class GameCore : Game
             GameEntity parent = ((HealthMeter)meter).parent;
             parent.meter = null;
             ((HealthMeter)meter).parent = null;
-            pooler.returnEntityToPool(Pooler.PoolType.HEALTH_METER, meter, healthMeters);
+            pooler.ReturnEntityToPool(Pooler.PoolType.HEALTH_METER, meter, healthMeters);
         }
     }
 

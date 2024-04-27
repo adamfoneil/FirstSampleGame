@@ -45,7 +45,7 @@ public class PathNav
         Console.WriteLine(entity.Position);
 
         // get next waypoint (where the entity will travel to)
-        nextWayPoint();
+        NextWayPoint();
     }
 
     // return offset path data based on an origin
@@ -79,7 +79,7 @@ public class PathNav
     }
 
     // set next wapoint as active
-    private void nextWayPoint()
+    private void NextWayPoint()
     {
         if (pathIndex < path.Count-1)
         {
@@ -91,7 +91,7 @@ public class PathNav
                 if (isLooping)
                 {
                     pathIndex = 0;
-                    nextWayPoint();
+                    NextWayPoint();
                 }
                     else
                     {
@@ -125,7 +125,7 @@ public class PathNav
         {
             float remainingDistance = moveDistance - distanceToWaypoint;
             entity.Position = wayPoint;
-            nextWayPoint();
+            NextWayPoint();
             if (IsActive)
             {
                 moveVector = wayPoint - entity.Position;
@@ -140,8 +140,8 @@ public class PathNav
             }
     }
 
-    // return a shape path
-    public static List<Vector2> getShapePath(int index)
+	// return a shape path
+	public static List<Vector2> GetShapePath(int index)
     {
         List<Vector2> path;
         switch(index)
