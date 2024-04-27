@@ -1,175 +1,173 @@
+using Chroma.Diagnostics.Logging;
+using Chroma.Graphics;
+using Chroma.Input.GameControllers;
+using Chroma.Windowing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Chroma.Graphics;
-using Chroma.Input.GameControllers;
-using Chroma;
-using Chroma.Graphics.TextRendering.TrueType;
-using Chroma.Windowing;
-using Chroma.Diagnostics.Logging;
 
 namespace GameController.Views
 {
-    public class GenericControllerView
-    {
-        private Log Log { get; } = LogManager.GetForCurrentAssembly();
-        private Queue<ControllerDriver> _scheduledForConnection = new();
-        private Queue<ControllerDriver> _scheduledForRemoval = new();
+	public class GenericControllerView
+	{
+		private Log Log { get; } = LogManager.GetForCurrentAssembly();
+		private Queue<ControllerDriver> _scheduledForConnection = new();
+		private Queue<ControllerDriver> _scheduledForRemoval = new();
 
-        protected Window _window;
-        protected RenderTarget _renderTarget;
-        
-        protected Dictionary<ControllerDriver, PlayerView> _controllers = new();
+		protected Window _window;
+		protected RenderTarget _renderTarget;
 
-        protected float _movementSpeed = 300.0f;
+		protected Dictionary<ControllerDriver, PlayerView> _controllers = new();
 
-        public virtual string ViewName => "Generic controllers";
-        
-        public virtual Color RightStickHatColor { get; } = Color.HotPink;
+		protected float _movementSpeed = 300.0f;
 
-        public virtual List<ControllerType> AcceptedControllers { get; } = new()
-        {
-            ControllerType.Unknown,
-            ControllerType.Virtual,
-            ControllerType.Xbox360,
-            ControllerType.XboxOne,
-            ControllerType.AmazonLuna,
-            ControllerType.GoogleStadia
-        };
+		public virtual string ViewName => "Generic controllers";
 
-        public virtual Dictionary<ControllerButton, Color> ButtonColors { get; } = new()
-        {
-            { ControllerButton.A, Color.Lime },
-            { ControllerButton.B, Color.Red },
-            { ControllerButton.X, Color.Blue },
-            { ControllerButton.Y, Color.Yellow }
-        };
+		public virtual Color RightStickHatColor { get; } = Color.HotPink;
 
-        public virtual Vector2 PositionOnScreen => new(
-            _window.Width - _renderTarget.Width,
-            _window.Height - _renderTarget.Height
-        );
+		public virtual List<ControllerType> AcceptedControllers { get; } = new()
+		{
+			ControllerType.Unknown,
+			ControllerType.Virtual,
+			ControllerType.Xbox360,
+			ControllerType.XboxOne,
+			ControllerType.AmazonLuna,
+			ControllerType.GoogleStadia
+		};
 
-        public GenericControllerView(Window window)
-        {
-            _window = window;
-            _renderTarget = new RenderTarget(window.Size / 2);
-        }
-        
-        public virtual void OnConnected(ControllerEventArgs e)
-        {
-            if (!AcceptedControllers.Contains(e.Controller.Info.Type))
-                return;
-            
-            e.Controller.SetDeadZone(ControllerAxis.LeftStickX, 4000);
-            e.Controller.SetDeadZone(ControllerAxis.LeftStickY, 4000);
+		public virtual Dictionary<ControllerButton, Color> ButtonColors { get; } = new()
+		{
+			{ ControllerButton.A, Color.Lime },
+			{ ControllerButton.B, Color.Red },
+			{ ControllerButton.X, Color.Blue },
+			{ ControllerButton.Y, Color.Yellow }
+		};
 
-            _scheduledForConnection.Enqueue(e.Controller);
-        }
+		public virtual Vector2 PositionOnScreen => new(
+			_window.Width - _renderTarget.Width,
+			_window.Height - _renderTarget.Height
+		);
 
-        public virtual void OnDisconnected(ControllerEventArgs e)
-        {
-            if (!_controllers.ContainsKey(e.Controller))
-                return;
-            
-            _scheduledForRemoval.Enqueue(e.Controller);
-        }
-        
-        public virtual void OnTouchpadMoved(ControllerTouchpadEventArgs e)
-        {
-        }
+		public GenericControllerView(Window window)
+		{
+			_window = window;
+			_renderTarget = new RenderTarget(window.Size / 2);
+		}
 
-        public virtual void OnTouchpadTouched(ControllerTouchpadEventArgs e)
-        {
-        }
+		public virtual void OnConnected(ControllerEventArgs e)
+		{
+			if (!AcceptedControllers.Contains(e.Controller.Info.Type))
+				return;
 
-        public virtual void OnTouchpadReleased(ControllerTouchpadEventArgs e)
-        {
-        }
+			e.Controller.SetDeadZone(ControllerAxis.LeftStickX, 4000);
+			e.Controller.SetDeadZone(ControllerAxis.LeftStickY, 4000);
 
-        public virtual void OnSensorStateChanged(ControllerSensorEventArgs e)
-        {
-        }
+			_scheduledForConnection.Enqueue(e.Controller);
+		}
 
-        public virtual void OnAxisMoved(ControllerAxisEventArgs e)
-        {
-        }
+		public virtual void OnDisconnected(ControllerEventArgs e)
+		{
+			if (!_controllers.ContainsKey(e.Controller))
+				return;
 
-        public virtual void OnButtonPressed(ControllerButtonEventArgs e)
-        {
-        }
+			_scheduledForRemoval.Enqueue(e.Controller);
+		}
 
-        public virtual void OnButtonReleased(ControllerButtonEventArgs e)
-        {
-        }
+		public virtual void OnTouchpadMoved(ControllerTouchpadEventArgs e)
+		{
+		}
 
-        public virtual void Update(float delta)
-        {
-            while (_scheduledForConnection.Any())
-            {
-                var controller = _scheduledForConnection.Dequeue();
-                
-                _controllers.Add(
-                    controller,
-                    new PlayerView(
-                        _renderTarget.Width / 2 - 16, 
-                        _renderTarget.Height / 2 - 16, 
-                        32, 
-                        32
-                    )
-                );
-            }
+		public virtual void OnTouchpadTouched(ControllerTouchpadEventArgs e)
+		{
+		}
 
-            foreach (var kvp in _controllers)
-            {
-                var playerView = kvp.Value;
-                
-                playerView.Rectangle.X += kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftStickX) * delta * _movementSpeed;
-                playerView.Rectangle.Y += kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftStickY) * delta * _movementSpeed;
+		public virtual void OnTouchpadReleased(ControllerTouchpadEventArgs e)
+		{
+		}
 
-                if (playerView.Rectangle.X < 0)
-                    playerView.Rectangle.X = 0;
-                else if (playerView.Rectangle.X + playerView.Rectangle.Width > _renderTarget.Width)
-                    playerView.Rectangle.X = _renderTarget.Width - playerView.Rectangle.Width;
+		public virtual void OnSensorStateChanged(ControllerSensorEventArgs e)
+		{
+		}
 
-                if (playerView.Rectangle.Y < 0)
-                    playerView.Rectangle.Y = 0;
-                else if (playerView.Rectangle.Y + playerView.Rectangle.Height > _renderTarget.Height)
-                    playerView.Rectangle.Y = _renderTarget.Height - playerView.Rectangle.Height;
-                
-                playerView.TriggerLeft = kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftTrigger);
-                playerView.TriggerRight = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightTrigger);
-                playerView.RightStickX = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightStickX);
-                playerView.RightStickY = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightStickY);
-                
-                _controllers[kvp.Key] = playerView;
-                
-                if (kvp.Key.IsButtonDown(ControllerButton.A))
-                    playerView.Color = ButtonColors[ControllerButton.A];
-                
-                if (kvp.Key.IsButtonDown(ControllerButton.B))
-                    playerView.Color = ButtonColors[ControllerButton.B];
-                
-                if (kvp.Key.IsButtonDown(ControllerButton.X))
-                    playerView.Color = ButtonColors[ControllerButton.X];
-                
-                if (kvp.Key.IsButtonDown(ControllerButton.Y))
-                    playerView.Color = ButtonColors[ControllerButton.Y];
+		public virtual void OnAxisMoved(ControllerAxisEventArgs e)
+		{
+		}
 
-                kvp.Key.SetLedColor(playerView.Color);
-            }
+		public virtual void OnButtonPressed(ControllerButtonEventArgs e)
+		{
+		}
 
-            while (_scheduledForRemoval.Any())
-            {
-                var controller = _scheduledForRemoval.Dequeue();
-                _controllers.Remove(controller);
-            }
-        }
+		public virtual void OnButtonReleased(ControllerButtonEventArgs e)
+		{
+		}
 
-        public virtual void Draw(RenderContext context)
-        {
-            /*
+		public virtual void Update(float delta)
+		{
+			while (_scheduledForConnection.Any())
+			{
+				var controller = _scheduledForConnection.Dequeue();
+
+				_controllers.Add(
+					controller,
+					new PlayerView(
+						_renderTarget.Width / 2 - 16,
+						_renderTarget.Height / 2 - 16,
+						32,
+						32
+					)
+				);
+			}
+
+			foreach (var kvp in _controllers)
+			{
+				var playerView = kvp.Value;
+
+				playerView.Rectangle.X += kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftStickX) * delta * _movementSpeed;
+				playerView.Rectangle.Y += kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftStickY) * delta * _movementSpeed;
+
+				if (playerView.Rectangle.X < 0)
+					playerView.Rectangle.X = 0;
+				else if (playerView.Rectangle.X + playerView.Rectangle.Width > _renderTarget.Width)
+					playerView.Rectangle.X = _renderTarget.Width - playerView.Rectangle.Width;
+
+				if (playerView.Rectangle.Y < 0)
+					playerView.Rectangle.Y = 0;
+				else if (playerView.Rectangle.Y + playerView.Rectangle.Height > _renderTarget.Height)
+					playerView.Rectangle.Y = _renderTarget.Height - playerView.Rectangle.Height;
+
+				playerView.TriggerLeft = kvp.Key.GetAxisValueNormalized(ControllerAxis.LeftTrigger);
+				playerView.TriggerRight = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightTrigger);
+				playerView.RightStickX = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightStickX);
+				playerView.RightStickY = kvp.Key.GetAxisValueNormalized(ControllerAxis.RightStickY);
+
+				_controllers[kvp.Key] = playerView;
+
+				if (kvp.Key.IsButtonDown(ControllerButton.A))
+					playerView.Color = ButtonColors[ControllerButton.A];
+
+				if (kvp.Key.IsButtonDown(ControllerButton.B))
+					playerView.Color = ButtonColors[ControllerButton.B];
+
+				if (kvp.Key.IsButtonDown(ControllerButton.X))
+					playerView.Color = ButtonColors[ControllerButton.X];
+
+				if (kvp.Key.IsButtonDown(ControllerButton.Y))
+					playerView.Color = ButtonColors[ControllerButton.Y];
+
+				kvp.Key.SetLedColor(playerView.Color);
+			}
+
+			while (_scheduledForRemoval.Any())
+			{
+				var controller = _scheduledForRemoval.Dequeue();
+				_controllers.Remove(controller);
+			}
+		}
+
+		public virtual void Draw(RenderContext context)
+		{
+			/*
             context.RenderTo(_renderTarget, (ctx, tgt) =>
             {
                 ctx.Clear(Color.Black);
@@ -295,36 +293,36 @@ namespace GameController.Views
                 _renderTarget, 
                 PositionOnScreen
             );*/
-        }
+		}
 
-        protected virtual void DrawViewSpecific(ControllerDriver controller, PlayerView player, RenderContext context)
-        {
-        }
+		protected virtual void DrawViewSpecific(ControllerDriver controller, PlayerView player, RenderContext context)
+		{
+		}
 
-        protected virtual void PostDraw(RenderContext context)
-        {
+		protected virtual void PostDraw(RenderContext context)
+		{
 
-        }
-        
-        private void BlendTriggerBar(Action renderLogic)
-        {
-            if (renderLogic == null)
-                return;
-            
-            RenderSettings.SetShapeBlendingEquations(
-                BlendingEquation.Subtract, 
-                BlendingEquation.Add
-            );
-            RenderSettings.SetShapeBlendingFunctions(
-                BlendingFunction.SourceColor,
-                BlendingFunction.One,
-                BlendingFunction.One,
-                BlendingFunction.Zero
-            );
-            
-            renderLogic();
-            
-            RenderSettings.ResetShapeBlending();
-        }
-    }
+		}
+
+		private void BlendTriggerBar(Action renderLogic)
+		{
+			if (renderLogic == null)
+				return;
+
+			RenderSettings.SetShapeBlendingEquations(
+				BlendingEquation.Subtract,
+				BlendingEquation.Add
+			);
+			RenderSettings.SetShapeBlendingFunctions(
+				BlendingFunction.SourceColor,
+				BlendingFunction.One,
+				BlendingFunction.One,
+				BlendingFunction.Zero
+			);
+
+			renderLogic();
+
+			RenderSettings.ResetShapeBlending();
+		}
+	}
 }
