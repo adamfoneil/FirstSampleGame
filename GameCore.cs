@@ -128,13 +128,13 @@ internal class GameCore : Game
         levelManager.CreateLevels();
 
         // create views for controller system
-        _views = new List<GenericControllerView>
-        {
-            new GenericControllerView(Window),
+        _views =
+		[
+			new GenericControllerView(Window),
             new DualShockControllerView(Window),
             new DualSenseControllerView(Window),
             new NintendoControllerView(Window)
-        };
+        ];
     }
 
 
