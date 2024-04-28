@@ -1,9 +1,9 @@
 
 using System;
-using FirstSampleGame.Abstract;
-using System.Collections.Generic;
-using FirstSampleGame.Entities;
 using Chroma.Graphics;
+using FirstSampleGame.Abstract;
+using FirstSampleGame.Entities;
+using System.Collections.Generic;
 
 
 
@@ -70,7 +70,7 @@ public class Pooler
         }
     }
 
-    /* //TODO evaluate this method later
+	/* //TODO evaluate this method later
     public void ReturnEntityToPool<T>(PoolType poolType, Entity entity, List<T> removalList = null) where T : Entity
     {
         var pool = pools[poolType];
@@ -83,60 +83,58 @@ public class Pooler
     }*/
 
 
+	// create a pool of health meters
+	public void CreateHealthMetersPool(int amount, Texture texture)
+	{
+		var pool = pools[PoolType.HEALTH_METER];
+		for (int index = 0; index < amount; index++)
+		{
+			HealthMeter meter = new HealthMeter();
+			//meter.setTexture(texture);
+			pool.Add(meter);
+			meter.Visible = false;
+			meter.Active = false;
+		}
 
-    // create a pool of health meters
-    public void CreateHealthMetersPool(int amount, Texture texture)
-    {
+		Console.WriteLine("created health meters pool " + pool.Count);
 
-        var pool = pools[PoolType.HEALTH_METER];
-        for (int index = 0;index < amount;index++)
-        {
-            HealthMeter meter = new HealthMeter();
-            //meter.setTexture(texture);
-            pool.Add(meter);
-            meter.Visible = false;
-            meter.Active = false;
-        }
+	}
 
-        Console.WriteLine("created health meters pool " + pool.Count);
+	// create a pool of bullets
+	public void CreateBulletPool(int amount, Texture texture)
+	{
 
-    }
+		var pool = pools[PoolType.BULLET];
+		for (int index = 0; index < amount; index++)
+		{
+			Bullet bullet = new Bullet();
+			bullet.SetTexture(texture);
+			pool.Add(bullet);
+			bullet.Visible = false;
+			bullet.Active = false;
+		}
 
-    // create a pool of bullets
-    public void CreateBulletPool(int amount, Texture texture)
-    {
+		Console.WriteLine("created bulletsPool " + pool.Count);
 
-        var pool = pools[PoolType.BULLET];
-        for (int index = 0;index < amount;index++)
-        {
-            Bullet bullet = new Bullet();
-            bullet.SetTexture(texture);
-            pool.Add(bullet);
-            bullet.Visible = false;
-            bullet.Active = false;
-        }
+	}
 
-        Console.WriteLine("created bulletsPool " + pool.Count);
+	// create a pool of enemies
+	public void CreateEnemyPool(int amount, Texture texture)
+	{
 
-    }
+		var pool = pools[PoolType.ENEMY];
+		for (int index = 0; index < amount; index++)
+		{
+			Enemy enemy = new Enemy();
+			enemy.SetTexture(texture);
+			pool.Add(enemy);
+			enemy.Visible = false;
+			enemy.Active = false;
+		}
 
-    // create a pool of enemies
-    public void CreateEnemyPool(int amount, Texture texture)
-    {
+		Console.WriteLine("created enemiesPool " + pool.Count);
 
-        var pool = pools[PoolType.ENEMY];
-        for (int index = 0;index < amount;index++)
-        {
-            Enemy enemy = new Enemy();
-            enemy.SetTexture(texture);
-            pool.Add(enemy);
-            enemy.Visible = false;
-            enemy.Active = false;
-        }
-
-        Console.WriteLine("created enemiesPool " + pool.Count);
-
-    }
+	}
 
 
 }

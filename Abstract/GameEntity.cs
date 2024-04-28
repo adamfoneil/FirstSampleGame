@@ -1,12 +1,7 @@
 ﻿using Chroma.ContentManagement;
 using Chroma.Graphics;
 using FirstSampleGame.Entities;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.Design;
 using System.Numerics;
-using System.Runtime.InteropServices;
 
 namespace FirstSampleGame.Abstract;
 
