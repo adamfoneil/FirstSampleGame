@@ -15,8 +15,7 @@ using Chroma.Audio.Sources;
 using Chroma.Input.GameControllers;
 using GameController.Views;
 using Chroma.Graphics.Particles;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 //pending
 
@@ -33,9 +32,10 @@ using System.Text.Json.Serialization;
 // animated sprites
 
 
+
 namespace FirstSampleGame;
 
-internal class GameCore : Game
+public class GameCore : Game
 {
     private Log Log { get; } = LogManager.GetForCurrentAssembly();
 
@@ -101,11 +101,11 @@ internal class GameCore : Game
     private Texture particleTexture;
     private ParticleEmitter particleEmitter;
 
-
     public Pooler pooler = new Pooler();
     private Random random = new Random();
     private LevelManager levelManager;
-    private int CurrentLevel;
+    private int currentLevel;
+
     
 
     internal GameCore() : base(new(false, false))
@@ -129,6 +129,8 @@ internal class GameCore : Game
         levelManager = new LevelManager();
         levelManager.CreateLevels();
 
+        currentLevel = 1;
+
         // create views for controller system
         _views = new List<GenericControllerView>
         {
@@ -143,7 +145,6 @@ internal class GameCore : Game
     protected override IContentProvider InitializeContentPipeline()
     {
         return new FileSystemContentProvider(
-            //Path.Combine(AppContext.BaseDirectory, "../../../Resources")
             Path.Combine(AppContext.BaseDirectory, "Resources")
         );
     }
@@ -213,7 +214,7 @@ internal class GameCore : Game
         spawnDelay = 2f;
         spawnTimer = spawnDelay;
 
-        InitLevel(1);
+        InitLevel(currentLevel);
 
     }
 
@@ -273,7 +274,6 @@ internal class GameCore : Game
                 context.Line(Player.Position, Reticle.Position, Color.White);
                 if (pathLogging)
                 {
-                    Console.WriteLine("draw it");
                     PathNav.DrawPath(pathLoggingPath, context);
                 }
             } 
@@ -422,7 +422,6 @@ internal class GameCore : Game
         // handle mouse input for firing a bullet
         if (Mouse.IsButtonDown(MouseButton.Left))
         {
-            Console.WriteLine($"pathLogging: {pathLogging} keypressTimer: {keypressTimer}");
             if (pathLogging && keypressTimer < 0)
             {
                 Console.WriteLine($"new Vector2({Mouse.GetPosition().X}, {Mouse.GetPosition().Y}),");
@@ -507,7 +506,7 @@ internal class GameCore : Game
 
             // get a randomPath
             int pathIndex = RandomRange(random, 2, 3);
-            List<Vector2> randomPath = PathNav.getShapePath(pathIndex);
+            List<Vector2> randomPath = levelManager.GetShapePath(pathIndex);
 
             // generate random scale, speed, scale of enemies
             float randomPathScale = RandomRange(random, 50f, 400f);
@@ -768,33 +767,27 @@ internal class GameCore : Game
         part.Scale = part.InitialScale * (((float)part.TTL / part.InitialTTL) * .5f);
     }
 
-    void LoadJsonFile(string filename)
+    public static dynamic LoadJsonFile(string filename)
     {
+        string filePath = Path.Combine(AppContext.BaseDirectory, "Resources/", filename);
 
-            var filePath = Path.Combine(
-                AppContext.BaseDirectory,
-                filename
-            );
+        Console.WriteLine(filePath);
+        
+        if (File.Exists(filePath))
+        {
+            string json = File.ReadAllText(filePath);
 
-            try
+            dynamic jsonObject = JsonConvert.DeserializeObject<dynamic>(json);
+
+
+            return jsonObject;
+
+        }
+            else
             {
-                using var sr = new StreamReader(filePath);
-                JsonSerializer.Deserialize<LevelJSON>(sr.ReadToEnd());
+                Console.WriteLine("file does not exist");
             }
-            catch (Exception e)
-            {
-                Console.WriteLine($"{filePath} was invalid {e}");
-            }
+
+        return null;
     }
-
-}
-
-[Serializable]
-public class LevelJSON 
-{
-    [JsonPropertyName("spawner_active")]
-    public bool SpawnerActive { get; set; } = true;
-
-    [JsonPropertyName("show_debug")]
-    public bool ShowDebug { get; set; }
 }
