@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Numerics;
 
 public class LevelManager
-{
+
 	private List<LevelRecord> Levels;
 	private int CurrentLevel;
 
@@ -34,8 +34,5 @@ public class LevelManager
 		];
 		CreateLevel("test-level.png", new Vector2(200, 300), spawnRecords);
 	}
-
-
-
 
 }
