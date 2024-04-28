@@ -25,7 +25,7 @@ public class LevelManager
     }
 
 
-    public void createLevels()
+    public void CreateLevels()
     {
         List<SpawnRecord> spawnRecords = new List<SpawnRecord>();
         spawnRecords.Add(new SpawnRecord(0, 150f , 1f, 100, PathNav.getShapePath(2), new Vector2(700f, 540f)));

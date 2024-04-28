@@ -30,8 +30,8 @@ public class Player : GameEntity
         Vector2 newPosition = Position + velocity;
 
         // Check collision with level map in both horizontal and vertical directions
-        bool collidesHorizontally = hitTestWithTexture(collisionTexture, new Vector2(newPosition.X, Position.Y));
-        bool collidesVertically = hitTestWithTexture(collisionTexture, new Vector2(Position.X, newPosition.Y));
+        bool collidesHorizontally = HitTestWithTexture(collisionTexture, new Vector2(newPosition.X, Position.Y));
+        bool collidesVertically = HitTestWithTexture(collisionTexture, new Vector2(Position.X, newPosition.Y));
 
         // If player collides horizontally, reset horizontal position
         if (collidesHorizontally)

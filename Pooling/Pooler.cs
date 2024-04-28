@@ -34,7 +34,7 @@ public class Pooler
 
 
     // return entity of specified type
-    public GameEntity getEntityFromPool(PoolType poolType)
+    public GameEntity GetEntityFromPool(PoolType poolType)
     {
 
         var pool = pools[poolType];
@@ -52,7 +52,7 @@ public class Pooler
     }
 
     // reteurn an entity the the specified pool and remove from another list if needed
-    public void returnEntityToPool<T>(PoolType poolType, GameEntity entity, List<T> removalList = null)
+    public void ReturnEntityToPool<T>(PoolType poolType, GameEntity entity, List<T> removalList = null)
     {
         var pool = pools[poolType];
         pool.Add(entity);
@@ -85,7 +85,7 @@ public class Pooler
 
 
     // create a pool of health meters
-    public void createHealthMetersPool(int amount, Texture texture)
+    public void CreateHealthMetersPool(int amount, Texture texture)
     {
 
         var pool = pools[PoolType.HEALTH_METER];
@@ -103,14 +103,14 @@ public class Pooler
     }
 
     // create a pool of bullets
-    public void createBulletPool(int amount, Texture texture)
+    public void CreateBulletPool(int amount, Texture texture)
     {
 
         var pool = pools[PoolType.BULLET];
         for (int index = 0;index < amount;index++)
         {
             Bullet bullet = new Bullet();
-            bullet.setTexture(texture);
+            bullet.SetTexture(texture);
             pool.Add(bullet);
             bullet.Visible = false;
             bullet.Active = false;
@@ -121,14 +121,14 @@ public class Pooler
     }
 
     // create a pool of enemies
-    public void createEnemyPool(int amount, Texture texture)
+    public void CreateEnemyPool(int amount, Texture texture)
     {
 
         var pool = pools[PoolType.ENEMY];
         for (int index = 0;index < amount;index++)
         {
             Enemy enemy = new Enemy();
-            enemy.setTexture(texture);
+            enemy.SetTexture(texture);
             pool.Add(enemy);
             enemy.Visible = false;
             enemy.Active = false;
