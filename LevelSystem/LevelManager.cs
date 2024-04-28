@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Numerics;
 
 public class LevelManager
+{
 
 	private List<LevelRecord> Levels;
 	private int CurrentLevel;
