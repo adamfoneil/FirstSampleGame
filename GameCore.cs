@@ -222,7 +222,7 @@ internal class GameCore : Game
         LevelRecord currentLevel = levelManager.GetCurrentLevel();
         foreach (var spawnRecord in currentLevel.SpawnRecords)
         {
-            spawnEnemyWithRecord(spawnRecord);
+            SpawnEnemyWithRecord(spawnRecord);
 
         }
         
@@ -357,7 +357,7 @@ internal class GameCore : Game
         }
 
         // update player's position based on direction
-        Player.Update(delta, playerDirection);
+        Player.Update(delta, playerDirection, LevelMap.Texture);
         
         // update particle emitter
         particleEmitter.Update(delta);
@@ -768,7 +768,7 @@ internal class GameCore : Game
         part.Scale = part.InitialScale * (((float)part.TTL / part.InitialTTL) * .5f);
     }
 
-    void loadJsonFile(string filename)
+    void LoadJsonFile(string filename)
     {
 
             var filePath = Path.Combine(
@@ -793,8 +793,8 @@ internal class GameCore : Game
 public class LevelJSON 
 {
     [JsonPropertyName("spawner_active")]
-    public bool spawnerActive { get; set; } = true;
+    public bool SpawnerActive { get; set; } = true;
 
     [JsonPropertyName("show_debug")]
-    public bool showDebug { get; set; }
+    public bool ShowDebug { get; set; }
 }
