@@ -15,20 +15,22 @@ using Chroma.Audio.Sources;
 using Chroma.Input.GameControllers;
 using GameController.Views;
 using Chroma.Graphics.Particles;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 //pending
 
-    // explosion effects
-    // more shape paths
-    // different shapes for enemies, player, projectiles
-    // cycling through shot damage
-    // damage indicator text float up
-    // pools create new object if run out of objects
-    // ability to center shapes on a position
-    // enemies that fire at player
-    // different projectiles for enemies
-    // weapon types - shotgun, rapid fire, normal
-    // animated sprites
+// explosion effects
+// more shape paths
+// different shapes for enemies, player, projectiles
+// cycling through shot damage
+// damage indicator text float up
+// pools create new object if run out of objects
+// ability to center shapes on a position
+// enemies that fire at player
+// different projectiles for enemies
+// weapon types - shotgun, rapid fire, normal
+// animated sprites
 
 
 namespace FirstSampleGame;
@@ -325,14 +327,8 @@ internal class GameCore : Game
         {
             playerDirection = ProcessAnalogStick(0);
         }
-
-        Vector2 lastPosition = Player.Position;
-
-        // update player's position based on direction
-        Player.Update(delta, playerDirection);
-
-        // check player collision with level map
-        if (Player.HitTestWithTexture(LevelMap.Texture)) Player.Position = lastPosition;
+        // update player location (collision detection with map is done in Udpate method)
+        Player.Update(delta, playerDirection, LevelMap.Texture);
 
         // execute collision checks
         CheckBulletCollision();
@@ -426,7 +422,7 @@ internal class GameCore : Game
         // handle mouse input for firing a bullet
         if (Mouse.IsButtonDown(MouseButton.Left))
         {
-
+            Console.WriteLine($"pathLogging: {pathLogging} keypressTimer: {keypressTimer}");
             if (pathLogging && keypressTimer < 0)
             {
                 Console.WriteLine($"new Vector2({Mouse.GetPosition().X}, {Mouse.GetPosition().Y}),");
@@ -435,7 +431,7 @@ internal class GameCore : Game
             }
                 else
                 {
-                    if (!pathLogging) fireBullet(); 
+                    if (!pathLogging) FireBullet();
                 }
 
             FireBullet();
@@ -556,9 +552,9 @@ internal class GameCore : Game
     }
 
 
-    void spawnEnemyWithRecord(SpawnRecord spawnRecord)
+    void SpawnEnemyWithRecord(SpawnRecord spawnRecord)
     {
-        spawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
+        SpawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
     }
 
     // spawns and enemy and health meter
@@ -772,4 +768,33 @@ internal class GameCore : Game
         part.Scale = part.InitialScale * (((float)part.TTL / part.InitialTTL) * .5f);
     }
 
+    void loadJsonFile(string filename)
+    {
+
+            var filePath = Path.Combine(
+                AppContext.BaseDirectory,
+                filename
+            );
+
+            try
+            {
+                using var sr = new StreamReader(filePath);
+                JsonSerializer.Deserialize<LevelJSON>(sr.ReadToEnd());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{filePath} was invalid {e}");
+            }
+    }
+
+}
+
+[Serializable]
+public class LevelJSON 
+{
+    [JsonPropertyName("spawner_active")]
+    public bool spawnerActive { get; set; } = true;
+
+    [JsonPropertyName("show_debug")]
+    public bool showDebug { get; set; }
 }

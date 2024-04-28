@@ -1,4 +1,5 @@
-﻿using Chroma.Input;
+﻿using Chroma.Graphics;
+using Chroma.Input;
 using FirstSampleGame.Abstract;
 using System.Numerics;
 
@@ -22,11 +23,30 @@ public class Player : GameEntity
         Scale = new(1f);
     }
 
-    public void Update(float delta, Vector2 direction)
+    public void Update(float delta, Vector2 direction, Texture collisionTexture)
     {
-        Vector2 velocity = direction * Speed * delta;
-        Position += velocity;
         shotTimer -= delta;
+        Vector2 velocity = direction * Speed * delta;
+        Vector2 newPosition = Position + velocity;
+
+        // Check collision with level map in both horizontal and vertical directions
+        bool collidesHorizontally = hitTestWithTexture(collisionTexture, new Vector2(newPosition.X, Position.Y));
+        bool collidesVertically = hitTestWithTexture(collisionTexture, new Vector2(Position.X, newPosition.Y));
+
+        // If player collides horizontally, reset horizontal position
+        if (collidesHorizontally)
+        {
+            newPosition.X = Position.X;
+        }
+
+        // If player collides vertically, reset vertical position
+        if (collidesVertically)
+        {
+            newPosition.Y = Position.Y;
+        }
+
+        Position = newPosition;
+
     }
 
 
