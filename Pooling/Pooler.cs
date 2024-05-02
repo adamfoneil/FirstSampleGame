@@ -14,7 +14,9 @@ public class Pooler
     public enum PoolType {
         BULLET,
         ENEMY,
-        HEALTH_METER
+        HEALTH_METER,
+        LEVEL_ITEM,
+        HOSTAGE
     }
 
 
@@ -96,7 +98,7 @@ public class Pooler
 			meter.Active = false;
 		}
 
-		Console.WriteLine("created health meters pool " + pool.Count);
+		Console.WriteLine("created HealthMeters pool " + pool.Count);
 
 	}
 
@@ -114,7 +116,7 @@ public class Pooler
 			bullet.Active = false;
 		}
 
-		Console.WriteLine("created bulletsPool " + pool.Count);
+		Console.WriteLine("created Bullets Pool " + pool.Count);
 
 	}
 
@@ -132,7 +134,44 @@ public class Pooler
 			enemy.Active = false;
 		}
 
-		Console.WriteLine("created enemiesPool " + pool.Count);
+		Console.WriteLine("created Enemies Pool " + pool.Count);
+
+	}
+
+	// create a pool of level items
+	public void CreateLevelItemPool(int amount, Texture texture)
+	{
+
+		var pool = pools[PoolType.LEVEL_ITEM];
+		for (int index = 0; index < amount; index++)
+		{
+			LevelItem levelItem = new LevelItem();
+			levelItem.SetTexture(texture);
+			pool.Add(levelItem);
+			levelItem.Visible = false;
+			levelItem.Active = false;
+		}
+
+		Console.WriteLine("created Level Items Pool " + pool.Count);
+
+	}
+
+
+	// create a pool of level items
+	public void CreateHostagePool(int amount, Texture texture)
+	{
+
+		var pool = pools[PoolType.HOSTAGE];
+		for (int index = 0; index < amount; index++)
+		{
+			Hostage hostage = new Hostage();
+			hostage.SetTexture(texture);
+			pool.Add(hostage);
+			hostage.Visible = false;
+			hostage.Active = false;
+		}
+
+		Console.WriteLine("created Hostage Pool " + pool.Count);
 
 	}
 

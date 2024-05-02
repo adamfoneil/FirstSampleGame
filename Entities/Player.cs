@@ -7,24 +7,28 @@ namespace FirstSampleGame.Entities;
 public class Player : GameEntity
 {
 	public float Speed;
-	public Vector2 shotVector;
-	public float fireRate;
-	public float shotTimer;
-	public float shotSpeed;
+    public float MinSpeed;
+    public float MaxSpeed;
+	public Vector2 ShotVector;
+	public float FireRate;
+	public float ShotTimer;
+	public float ShotSpeed;
 
 	public Player(string textureName = "player.png")
 	{
 		TextureName = textureName;
-		Speed = 300;
-		shotSpeed = 1500f;
-		fireRate = .1f;
-		shotVector = Vector2.Zero;
+        MinSpeed = 40f;
+        MaxSpeed = 150f;
+		Speed = 70f;
+		ShotSpeed = 1500f;
+		FireRate = .1f;
+		ShotVector = Vector2.Zero;
 		Scale = new(1f);
 	}
 
     public void Update(float delta, Vector2 direction, Texture collisionTexture)
     {
-        shotTimer -= delta;
+        ShotTimer -= delta;
         Vector2 velocity = direction * Speed * delta;
         Vector2 newPosition = Position + velocity;
 
