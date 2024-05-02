@@ -18,18 +18,9 @@ using Chroma.Graphics.Particles;
 using Newtonsoft.Json;
 
 //pending
-
-// explosion effects
-// more shape paths
 // different shapes for enemies, player, projectiles
-// cycling through shot damage
 // damage indicator text float up
 // pools create new object if run out of objects
-// ability to center shapes on a position
-// enemies that fire at player
-// different projectiles for enemies
-// weapon types - shotgun, rapid fire, normal
-// animated sprites
 
 
 
@@ -43,14 +34,13 @@ public class GameCore : Game
     private List<GenericControllerView> _views;
 
     // GameEntity lists for enemies, bullets, and health meters
-    private List<GameEntity> enemies = new List<GameEntity>();
-    private List<GameEntity> bullets = new List<GameEntity>();
-    private List<GameEntity> healthMeters = new List<GameEntity>();
+    public List<GameEntity> Bullets = new List<GameEntity>();
+    public List<GameEntity> HealthMeters = new List<GameEntity>();
 
 
     // player and reticle instances
-    private Player Player;
-    private Reticle Reticle;
+    public Player Player;
+    public Reticle Reticle;
 
     // level map
     private GameEntity LevelMap;
@@ -58,34 +48,18 @@ public class GameCore : Game
     // texture variables
     private Texture BulletTexture;
     private Texture EnemyTexture;
+    private Texture LevelItemTexture;
+    private Texture HostageTexture;
     private Texture ReticleTexture;
 
-    // level texture names
-    private List<string> LeveTexturelNames = new List<string>();
-
-
-    // spawner variables
-    private float spawnTimer;
-    private float spawnDelay;
-    private bool showDebug;
-    private bool spawnerActive;
-
-    // keypress delay for debug menu
-    private float keypressTimer;
-    private float keypressDelay;
-
     // toggles for joystick and mouse control
-    private bool activeJoystick;
-    private bool mouseReticle;
+    private bool ActiveJoystick;
+    public bool MouseReticle;
 
-    // toggle Path logging
-    private bool pathLogging = false;
-
-    private List<Vector2> pathLoggingPath;
     
     // analog sticks
-    private Vector2 leftStick;
-    private Vector2 rightStick;
+    private Vector2 LeftAnalogStick;
+    private Vector2 RightAnalogStick;
 
     // screen dimensions
     private float screenWidth = 1920f;
@@ -101,10 +75,14 @@ public class GameCore : Game
     private Texture particleTexture;
     private ParticleEmitter particleEmitter;
 
-    public Pooler pooler = new Pooler();
-    private Random random = new Random();
-    private LevelManager levelManager;
-    private int currentLevel;
+    public Pooler Pooler = new Pooler();
+    public Random RandomNumberGenerator = new Random();
+
+    public LevelManager LevelManager;
+
+    public SpawnManager Spawner;
+
+    public DevMenu DevMenu;
 
     
 
@@ -112,24 +90,26 @@ public class GameCore : Game
     {     
         Window.Mode.SetWindowed((ushort)screenWidth, (ushort)screenHeight, true);
 
-        // init debug menu keypress delay
-        keypressDelay = .25f;
-        keypressTimer = keypressDelay;
+        // init dev menu
+        DevMenu = new DevMenu(this);
+        Spawner = new SpawnManager(this);
+
 
         // set visibility of mouse pointer
-        Chroma.Input.Cursor.IsVisible = showDebug;
+        Chroma.Input.Cursor.IsVisible = DevMenu.ShowDevMenu;
 
         // init contol variables
-        activeJoystick = false;
-        mouseReticle = false;
-        showDebug = false;
-        spawnerActive = false;
+        ActiveJoystick = false;
+        MouseReticle = false;
+        Spawner.SpawnerActive = false;
+
 
         // init LevelManager
-        levelManager = new LevelManager();
-        levelManager.CreateLevels();
+        LevelManager = new LevelManager(this);
+        LevelManager.CreateLevels();
 
-        currentLevel = 1;
+
+        LevelManager.CurrentLevel = 1;
 
         // create views for controller system
         _views = new List<GenericControllerView>
@@ -149,16 +129,14 @@ public class GameCore : Game
         );
     }
 
-
-
-
-
     protected override void LoadContent()
     {
 
         // load textures to be used for GameEntity pools
         BulletTexture = Content.Load<Texture>("bullet.png");
         EnemyTexture = Content.Load<Texture>("pentagram.png");
+        LevelItemTexture = Content.Load<Texture>("pentagram.png");
+        HostageTexture = Content.Load<Texture>("pentagram.png");
         ReticleTexture = Content.Load<Texture>("reticle.png");
 
         // create player, reticle, level map
@@ -172,9 +150,6 @@ public class GameCore : Game
         Player.LoadTexture(Content);
         Reticle.LoadTexture(Content);
         LevelMap.LoadTexture(Content);
-
-
-
 
         // set player's initial position in center
         Player.Position = new Vector2(760f, 540f);
@@ -200,37 +175,21 @@ public class GameCore : Game
         sfxExplosion = Content.Load<Sound>("doomsg.wav");
 
         // create GameEntity pools
-        pooler.CreateBulletPool(50, BulletTexture);
-        pooler.CreateEnemyPool(50, EnemyTexture);
-        pooler.CreateHealthMetersPool(50, EnemyTexture);
+        Pooler.CreateBulletPool(50, BulletTexture);
+        Pooler.CreateEnemyPool(50, EnemyTexture);
+        Pooler.CreateHealthMetersPool(50, EnemyTexture);
+        Pooler.CreateLevelItemPool(50, LevelItemTexture);
+        Pooler.CreateHostagePool(50, HostageTexture);
 
         
         // create meter for player
-        HealthMeter meter = (HealthMeter) pooler.GetEntityFromPool(Pooler.PoolType.HEALTH_METER);
+        HealthMeter meter = (HealthMeter) Pooler.GetEntityFromPool(Pooler.PoolType.HEALTH_METER);
         Player.meter = meter;
         meter.parent = Player;
     
-        // init spawner delay
-        spawnDelay = 2f;
-        spawnTimer = spawnDelay;
-
-        InitLevel(currentLevel);
+        LevelManager.InitLevel();
 
     }
-
-    public void InitLevel(int level)
-    {
-        LevelRecord currentLevel = levelManager.GetCurrentLevel();
-        foreach (var spawnRecord in currentLevel.SpawnRecords)
-        {
-            SpawnEnemyWithRecord(spawnRecord);
-
-        }
-        
-    }
-
-
-
 
     protected override void Draw(RenderContext context)
     {                
@@ -247,7 +206,7 @@ public class GameCore : Game
         context.DrawTexture(particleSystemRenderTarget, Vector2.Zero, Vector2.One, Vector2.Zero, 0);
 
         // draw debug menu text
-        context.DrawString($" FPS {PerformanceCounter.FPS}\n <1> showDebug: {showDebug} \n <2> Player.Speed: {Player.Speed} \n <3> shotSpeed: {Player.shotSpeed} \n <4> fireRate:{Player.fireRate:0.##} \n <5> spawnerActive: {spawnerActive} \n <6> mouseReticle: {mouseReticle} \n <7> pathLogging: {pathLogging} \n Bullets: {bullets.Count} \n Enemies: {enemies.Count} \n mousePosition: {Reticle.Position} \n leftStick: {leftStick} \n rightStick: {rightStick}", new(20), Chroma.Graphics.Color.White);
+        context.DrawString($" FPS {PerformanceCounter.FPS}\n <1> DevMenu.ShowDevMenu: {DevMenu.ShowDevMenu} \n <2> Player.Speed: {Player.Speed} \n <3> ShotSpeed: {Player.ShotSpeed} \n <4> FireRate:{Player.FireRate:0.##} \n <5> SpawnerActive: {Spawner.SpawnerActive} \n <6> MouseReticle: {MouseReticle} \n <7> PathLogging: {DevMenu.PathLogging} \n Bullets: {Bullets.Count} \n Enemies: {Spawner.Enemies.Count} \n mousePosition: {Reticle.Position} \n LeftAnalogStick: {LeftAnalogStick} \n RightAnalogStick: {RightAnalogStick}", new(20), Chroma.Graphics.Color.White);
 
 
         // draw player , reticle and health meter
@@ -256,33 +215,33 @@ public class GameCore : Game
         Player.meter.drawHealthMeter(context);
 
         // draw bullets
-        foreach (var bullet in bullets)
+        foreach (var bullet in Bullets)
         {
             if (bullet.Visible) context.DrawTexture(bullet.Texture, bullet.DrawPosition(), bullet.Scale);
         }
 
         // draw enemies
-        foreach (var enemy in enemies)
+        foreach (var enemy in Spawner.Enemies)
         {
             if (enemy.Visible) context.DrawTexture(enemy.Texture, enemy.DrawPosition(), enemy.Scale);
             enemy.meter.drawHealthMeter(context);
 
-            // only draw paths and reticle ray if showDebug is true
-            if (showDebug)
+            // only draw paths and reticle ray if DevMenu.ShowDevMenu is true
+            if (DevMenu.ShowDevMenu)
             {
                 PathNav.DrawPath(enemy.pathNav.path, context);
                 context.Line(Player.Position, Reticle.Position, Color.White);
-                if (pathLogging)
+                if (DevMenu.PathLogging)
                 {
-                    PathNav.DrawPath(pathLoggingPath, context);
+                    PathNav.DrawPath(DevMenu.PathLoggingPath, context);
                 }
             } 
         }
 
-            // only draw paths and reticle ray if showDebug is true
-            if (showDebug && pathLogging)
+            // only draw paths and reticle ray if DevMenu.ShowDevMenu is true
+            if (DevMenu.ShowDevMenu && DevMenu.PathLogging)
             {
-                PathNav.DrawPath(pathLoggingPath, context);
+                PathNav.DrawPath(DevMenu.PathLoggingPath, context);
             } 
     }
 
@@ -294,10 +253,10 @@ public class GameCore : Game
             _views[i].Update(delta);
 
 
-        // handle rightStick or mouse control of reticle
-        if (activeJoystick && !mouseReticle)
+        // handle RightAnalogStick or mouse control of reticle
+        if (ActiveJoystick && !MouseReticle)
         {
-            Reticle.Position = Player.Position + rightStick * 50f;
+            Reticle.Position = Player.Position + RightAnalogStick * 50f;
             float reticleDistance = Vector2.Distance(Reticle.Position, Player.Position);
             if (50f - reticleDistance <  5f) FireBullet();
         }
@@ -305,23 +264,23 @@ public class GameCore : Game
             {
                 Reticle.Position = Mouse.GetPosition();
             }
-        // calculate player's shotVector based on reticle position
-        Player.shotVector = Reticle.Position - Player.Position;
+        // calculate player's ShotVector based on reticle position
+        Player.ShotVector = Reticle.Position - Player.Position;
 
         // update bullet positions
-        foreach (var bullet in bullets)
+        foreach (var bullet in Bullets)
         {
             if (bullet.Active) ((Bullet)bullet).Update(delta);
         }
 
         // update enemy positions
-        foreach (var enemy in enemies)
+        foreach (var enemy in Spawner.Enemies)
         {
             if (enemy.Active) ((Enemy)enemy).Update(delta);
         }
 
 
-        // handle leftStick and keyboard for getting direction of player
+        // handle LeftAnalogStick and keyboard for getting direction of player
         Vector2 playerDirection = ProcessKeyboardInput();
         if (playerDirection.X == 0 && playerDirection.Y == 0)
         {
@@ -339,7 +298,7 @@ public class GameCore : Game
 
         // remove bullets that have left the screen
         var bulletsToKill = new List<GameEntity>();
-        foreach (var bullet in bullets)
+        foreach (var bullet in Bullets)
         {
             if (bullet.Position.X > screenWidth || bullet.Position.X < 0 || bullet.Position.Y > screenHeight || bullet.Position.Y < 0)
             {
@@ -349,7 +308,7 @@ public class GameCore : Game
         RemoveBullets(bulletsToKill);
 
 
-        // handle leftStick and keyboard for getting direction of player
+        // handle LeftAnalogStick and keyboard for getting direction of player
         //Vector2 playerDirection = ProcessKeyboardInput();
         if (playerDirection.X == 0 && playerDirection.Y == 0)
         {
@@ -363,81 +322,27 @@ public class GameCore : Game
         particleEmitter.Update(delta);
 
         // handle debug menu hotkeys
-        keypressTimer -= delta;
-        if (keypressTimer < 0)
-        {
-            if (Keyboard.IsKeyDown(KeyCode.Alpha1))
-            {
-                showDebug = !showDebug;
-                Chroma.Input.Cursor.IsVisible = showDebug;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha2))
-            {
-                Player.Speed += 25f;
-                if (Player.Speed > 500f) Player.Speed = 200f;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha3))
-            {
-                Player.shotSpeed += 250f;
-                if (Player.shotSpeed > 2500f) Player.shotSpeed = 1000f;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha4))
-            {
-                Player.fireRate -= .1f;
-                if (Player.fireRate < .1f) Player.fireRate = .5f;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha5))
-            {
-                spawnerActive = !spawnerActive;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha6))
-            {
-                mouseReticle = !mouseReticle;
-                keypressTimer = keypressDelay;
-            }
-
-            if (Keyboard.IsKeyDown(KeyCode.Alpha7))
-            {
-                pathLogging = !pathLogging;
-                if (pathLogging) 
-                {
-                    pathLoggingPath = new List<Vector2>();
-                    showDebug = true;
-                    mouseReticle = true;
-                }
-                keypressTimer = keypressDelay;
-            }
-        }
+        DevMenu.ProcessDevMenuInput(delta);
 
         // handle mouse input for firing a bullet
         if (Mouse.IsButtonDown(MouseButton.Left))
         {
-            if (pathLogging && keypressTimer < 0)
+            if (DevMenu.PathLogging && DevMenu.KeypressTimer < 0)
             {
                 Console.WriteLine($"new Vector2({Mouse.GetPosition().X}, {Mouse.GetPosition().Y}),");
-                keypressTimer = keypressDelay;
-                pathLoggingPath.Add(Mouse.GetPosition());
+                DevMenu.KeypressTimer = DevMenu.KeypressDelay;
+                DevMenu.PathLoggingPath.Add(Mouse.GetPosition());
             }
                 else
                 {
-                    if (!pathLogging) FireBullet();
+                    if (!DevMenu.PathLogging) FireBullet();
                 }
 
             FireBullet();
         }
 
         // check if enemy should be spawned
-        SpawnCheck(delta);
+        Spawner.SpawnCheck(delta);
 
 
         base.Update(delta);
@@ -446,14 +351,14 @@ public class GameCore : Game
     // returns a 
     Vector2 ProcessAnalogStick(int index)
     {
-        Vector2 stick = leftStick;
+        Vector2 stick = LeftAnalogStick;
         if (index == 0)
         {
-            stick = leftStick;
+            stick = LeftAnalogStick;
         } 
             else
             {
-                stick = rightStick;
+                stick = RightAnalogStick;
             }
 
         Vector2 direction = Vector2.Zero;
@@ -491,101 +396,31 @@ public class GameCore : Game
         return direction;
     }
 
-    void SpawnCheck(float delta)
-    {
-
-        spawnTimer -= delta;
-        if (spawnerActive && spawnTimer < 0 && enemies.Count < 2) 
-        {
-            // get a random spawn location at a random angle on a radius; 
-            float radius = 300f;
-            float randomAngle = RandomRange(random, 0f, 360f) * MathF.PI / 180;
-            Vector2 originPosition = new Vector2(960f, 540f);
-            Vector2 offsetPosition = new Vector2(MathF.Cos(randomAngle) * radius, MathF.Sin(randomAngle) * radius);
-            Vector2 spawnPosition =  originPosition +  offsetPosition;
-
-            // get a randomPath
-            int pathIndex = RandomRange(random, 2, 3);
-            List<Vector2> randomPath = levelManager.GetShapePath(pathIndex);
-
-            // generate random scale, speed, scale of enemies
-            float randomPathScale = RandomRange(random, 50f, 400f);
-            float randomSpeed = RandomRange(random, 30f, 150f);
-            float randomEnemyScale = RandomRange(random, 1f, 2f);
-
-            bool offsetPath = false;
-            if (pathIndex == 2 || pathIndex == 3) 
-            {
-                randomPathScale = 1;
-                offsetPath = false;
-                spawnPosition = Vector2.Zero;
-            }
-
-            // spawn the enemy with the random data
-            SpawnEnemy(spawnPosition, randomSpeed, randomEnemyScale,  randomPath, randomPathScale, true, offsetPath);
-
-            // reset the timer for next spawn
-            spawnTimer = spawnDelay;
-
-            Console.WriteLine($"spawnPosition: {spawnPosition} pathIndex:  {pathIndex} randomSpeed: {randomSpeed} randomEnemyScale: {randomEnemyScale}");
-        }
-
-
-    }
-
     
     // fires a bullet in direction of the reticle
     void FireBullet()
     {
-        if (Player.shotTimer > 0) return;
-        Player.shotTimer = Player.fireRate;
+        if (Player.ShotTimer > 0) return;
+        Player.ShotTimer = Player.FireRate;
         sfxShot.Play();
-        Bullet bullet = (Bullet)pooler.GetEntityFromPool(Pooler.PoolType.BULLET);
-        bullets.Add(bullet);
-        bullet.Speed = Player.shotSpeed;
+        Bullet bullet = (Bullet)Pooler.GetEntityFromPool(Pooler.PoolType.BULLET);
+        Bullets.Add(bullet);
+        bullet.Speed = Player.ShotSpeed;
         bullet.Visible = true;
         bullet.Active = true;
         bullet.Position = Player.Position;
 
-        bullet.Direction = Vector2.Normalize(Player.shotVector);
+        bullet.Direction = Vector2.Normalize(Player.ShotVector);
     }
 
-
-    void SpawnEnemyWithRecord(SpawnRecord spawnRecord)
-    {
-        SpawnEnemy(spawnRecord.SpawnPosition, spawnRecord.EnemySpeed, spawnRecord.EnemyScale, spawnRecord.EnemyPath, 1f, true, false);
-    }
-
-    // spawns and enemy and health meter
-    void SpawnEnemy(Vector2 position, float speed, float enemyScale,  List<Vector2> path = default, float pathScale = 1f, bool setActive = true, bool offsetPath = true)
-    {
-        Enemy enemy = (Enemy) pooler.GetEntityFromPool(Pooler.PoolType.ENEMY);
-        enemy.Position = position;
-        enemy.Active = true;
-        enemy.Visible = true;
-        enemy.Speed = speed;
-        enemy.Scale = new(enemyScale);
-        enemies.Add((GameEntity)enemy);
-
-        if (path != default) enemy.pathNav.SetPath(enemy, position, path, pathScale, setActive, offsetPath);
-
-        HealthMeter meter = (HealthMeter) pooler.GetEntityFromPool(Pooler.PoolType.HEALTH_METER);
-        meter.Position = position;
-        meter.Active = true;
-        meter.Visible = true;
-        meter.parent = enemy;
-        meter.Scale = new(1f);
-        enemy.meter = meter;
-        healthMeters.Add((GameEntity)meter);
-    }
 
     // functions for random numbers in a range
 
-    static float RandomRange(Random rand, float min, float max)
+    public static float RandomRange(Random rand, float min, float max)
     {
         return (float) (rand.NextDouble() * (max - min) + min);
     }
-    static int RandomRange(Random rand, int min, int max)
+    public static int RandomRange(Random rand, int min, int max)
     {
         return rand.Next(min, max + 1);
     }
@@ -594,9 +429,9 @@ public class GameCore : Game
     // checks for player collision with enemies and applies damage, plays sound effect
     void CheckPlayerCollision()
     {
-        for (int enemyIndex = 0; enemyIndex < enemies.Count; enemyIndex++)
+        for (int enemyIndex = 0; enemyIndex < Spawner.Enemies.Count; enemyIndex++)
         {
-            var enemy = enemies[enemyIndex];
+            var enemy = Spawner.Enemies[enemyIndex];
             if (Player.HitTestWith(enemy))
             {
                 Player.Damage += 1;
@@ -614,9 +449,9 @@ public class GameCore : Game
         var bulletsToKill = new List<GameEntity>();
         var metersToKill = new List<GameEntity>();
 
-        foreach (GameEntity bullet in bullets)  
+        foreach (GameEntity bullet in Bullets)  
         {
-            foreach (GameEntity enemy in enemies)
+            foreach (GameEntity enemy in Spawner.Enemies)
             {
                 if (enemy.HitTestWith(bullet) && enemy.Active) 
                 {
@@ -656,7 +491,7 @@ public class GameCore : Game
         {
             var bullet = bulletsToKill[0];
             bulletsToKill.RemoveAt(0);
-            pooler.ReturnEntityToPool(Pooler.PoolType.BULLET, bullet, bullets);
+            Pooler.ReturnEntityToPool(Pooler.PoolType.BULLET, bullet, Bullets);
         }
     }
 
@@ -666,7 +501,7 @@ public class GameCore : Game
         {
             var enemy = enemiesToKill[0];
             enemiesToKill.RemoveAt(0);
-            pooler.ReturnEntityToPool(Pooler.PoolType.ENEMY, enemy, enemies);
+            Pooler.ReturnEntityToPool(Pooler.PoolType.ENEMY, enemy, Spawner.Enemies);
         }
     }
 
@@ -679,7 +514,7 @@ public class GameCore : Game
             GameEntity parent = ((HealthMeter)meter).parent;
             parent.meter = null;
             ((HealthMeter)meter).parent = null;
-            pooler.ReturnEntityToPool(Pooler.PoolType.HEALTH_METER, meter, healthMeters);
+            Pooler.ReturnEntityToPool(Pooler.PoolType.HEALTH_METER, meter, HealthMeters);
         }
     }
 
@@ -688,7 +523,7 @@ public class GameCore : Game
     protected override void ControllerDisconnected(ControllerEventArgs e)
     {
         Console.WriteLine("controller disconnected");
-        activeJoystick = false;
+        ActiveJoystick = false;
         for (var i = 0; i < _views.Count; i++)
         {
             if (_views[i].AcceptedControllers.Contains(e.Controller.Info.Type))
@@ -699,7 +534,7 @@ public class GameCore : Game
     protected override void ControllerConnected(ControllerEventArgs e)
     {
         Console.WriteLine("controller connected");
-        activeJoystick = true;
+        ActiveJoystick = true;
         for (var i = 0; i < _views.Count; i++)
         {
             if (_views[i].AcceptedControllers.Contains(e.Controller.Info.Type))
@@ -710,10 +545,10 @@ public class GameCore : Game
     protected override void ControllerAxisMoved(ControllerAxisEventArgs e)
     {
         //if (e.Axis == ControllerAxis.LeftStickX) Console.WriteLine($"Axis {e.Axis} Value: {e.Value}");
-        if (e.Axis == ControllerAxis.LeftStickX) leftStick.X = NormalizeValue(e.Value);
-        if (e.Axis == ControllerAxis.LeftStickY) leftStick.Y = NormalizeValue(e.Value);
-        if (e.Axis == ControllerAxis.RightStickX) rightStick.X = NormalizeValue(e.Value);
-        if (e.Axis == ControllerAxis.RightStickY) rightStick.Y = NormalizeValue(e.Value);
+        if (e.Axis == ControllerAxis.LeftStickX) LeftAnalogStick.X = NormalizeValue(e.Value);
+        if (e.Axis == ControllerAxis.LeftStickY) LeftAnalogStick.Y = NormalizeValue(e.Value);
+        if (e.Axis == ControllerAxis.RightStickX) RightAnalogStick.X = NormalizeValue(e.Value);
+        if (e.Axis == ControllerAxis.RightStickY) RightAnalogStick.Y = NormalizeValue(e.Value);
 
 
         for (var i = 0; i < _views.Count; i++)
@@ -790,4 +625,44 @@ public class GameCore : Game
 
         return null;
     }
+
+
+
+    public void SaveObjectToJsonFile(LevelRecordObj obj, string filePath)
+    {
+        string json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+
+        File.WriteAllText(filePath, json);
+    }
+
+    public void SaveLevelRecordToJson()
+    {
+        string filename = "level.json";
+        string filePath = Path.Combine(AppContext.BaseDirectory, "Resources/", filename);
+        
+        LevelRecordObj obj = new LevelRecordObj
+        {
+            level = 1,
+            textureName = "test-level.png",
+            playerSpawnPosition = new Vector2(5,5),
+            spawnEnemyRecords = new List<SpawnEnemyRecord>()
+
+        };
+
+        SaveObjectToJsonFile(obj, filePath);
+
+        Console.WriteLine("JSON file saved successfully.");
+    }
+
+}
+
+
+
+public class LevelRecordObj
+{
+    public int level;
+	public string textureName;
+	public Vector2 playerSpawnPosition;
+	public List<SpawnEnemyRecord> spawnEnemyRecords;
+
 }

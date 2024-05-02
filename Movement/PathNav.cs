@@ -1,10 +1,8 @@
 using Chroma.Graphics;
-using FirstSampleGame;
 using FirstSampleGame.Abstract;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Security.Cryptography.X509Certificates;
 
 public class PathNav
 {

@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-public class SpawnRecord
+public class SpawnEnemyRecord
 {
-
 	public int EnemyType;
 	public float EnemySpeed;
 	public float EnemyScale;
@@ -12,7 +11,7 @@ public class SpawnRecord
 	public List<Vector2> EnemyPath;
 
 
-	public SpawnRecord(int enemyType, float enemySpeed, float enemyScale, int enemyHitPoints, List<Vector2> enemyPath, Vector2 spawnPosition = default)
+	public SpawnEnemyRecord(int enemyType, float enemySpeed, float enemyScale, int enemyHitPoints, List<Vector2> enemyPath, Vector2 spawnPosition = default)
 	{
 		EnemyType = enemyType;
 		EnemySpeed = enemySpeed;

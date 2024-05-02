@@ -6,13 +6,17 @@ public class LevelRecord
 	public int Level;
 	public string TextureName;
 	public Vector2 PlayerSpawnPosition;
-	public List<SpawnRecord> SpawnRecords;
+	public List<SpawnEnemyRecord> SpawnEnemyRecords;
+    public List<SpawnLevelItemRecord> SpawnLevelItemRecords;
+    public List<SpawnHostageRecord> SpawnHostageRecords;
 
-	public LevelRecord(int level, string textureName, Vector2 playerSpawnPosition, List<SpawnRecord> spawnRecords)
+	public LevelRecord(int level, string textureName, Vector2 playerSpawnPosition, List<SpawnEnemyRecord> spawnEnemyRecords, List<SpawnLevelItemRecord> spawnLevelItemRecords, List<SpawnHostageRecord> spawnHostageRecords)
 	{
 		Level = level;
 		TextureName = textureName;
 		PlayerSpawnPosition = playerSpawnPosition;
-		SpawnRecords = spawnRecords;
+		SpawnEnemyRecords = spawnEnemyRecords;
+        SpawnLevelItemRecords = spawnLevelItemRecords;
+        SpawnHostageRecords = spawnHostageRecords;
 	}
 }
